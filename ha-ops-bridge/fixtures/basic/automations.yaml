@@ -1,0 +1,7 @@
+vacuum_start:
+  alias: Vacuum Start
+  trigger:
+    - platform: time
+      at: "08:00"
+  action:
+    - service: vacuum.start

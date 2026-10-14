@@ -1,0 +1,2 @@
+first:
+  inner: !include b.yaml

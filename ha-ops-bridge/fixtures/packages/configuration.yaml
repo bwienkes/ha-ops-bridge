@@ -1,0 +1,9 @@
+homeassistant:
+  name: Packages Fixture
+packages:
+  office:
+    script:
+      laundry:
+        alias: Laundry (office)
+        sequence:
+          - service: homeassistant.turn_on

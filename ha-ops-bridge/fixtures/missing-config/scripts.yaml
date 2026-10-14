@@ -1,0 +1,4 @@
+laundry:
+  alias: Laundry
+  sequence:
+    - service: homeassistant.turn_on

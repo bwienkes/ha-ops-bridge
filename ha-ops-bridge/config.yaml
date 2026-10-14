@@ -1,0 +1,25 @@
+# ha-ops-bridge app manifest (current Supervisor apps schema)
+name: ha-ops-bridge
+slug: ha-ops-bridge
+version: "1.0.0"
+description: >
+  Preauthorized operations bridge for Home Assistant: script/automation
+  read, log line search, config checks, and four bounded mutation
+  operations (automation toggle, automation update, script execute,
+  scene write) via the local HA REST API. Bearer token required.
+url: https://github.com/bwienkes/ha-ops-bridge
+arch:
+  - aarch64
+  - amd64
+startup: application
+ports:
+  - "8947/tcp"
+ports_description:
+  tcp: "Fixed unprivileged bridge port 8947; Bearer-token auth required."
+map:
+  - type: homeassistant_config
+    read_only: true
+options:
+  bridge_token: ""
+schema:
+  bridge_token: password(16,128)

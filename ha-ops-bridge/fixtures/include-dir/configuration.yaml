@@ -1,0 +1,3 @@
+homeassistant:
+  name: IncludeDir Fixture
+automation: !include_dir automations.d/

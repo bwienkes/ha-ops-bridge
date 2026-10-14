@@ -1,0 +1,5 @@
+morning_routine:
+  alias: Morning
+  trigger:
+    - platform: time
+      at: "07:00"

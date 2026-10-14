@@ -1,0 +1,20 @@
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Test-run captures (never publish these; they can embed local paths)
+_*.txt
+.testtmp/
+.pytest_cache/
+
+# Local env / secret material (never commit)
+*.env
+.env
+.env.*
+*.local
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log

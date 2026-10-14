@@ -1,0 +1,5 @@
+evening_lights:
+  alias: Evening Lights
+  trigger:
+    - platform: sun
+      event: sunset

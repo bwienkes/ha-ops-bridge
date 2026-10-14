@@ -1,0 +1,3 @@
+laundry:
+  alias: Laundry
+  data: !include ../escape.yaml

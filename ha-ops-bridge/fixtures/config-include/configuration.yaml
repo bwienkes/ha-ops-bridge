@@ -1,0 +1,4 @@
+homeassistant:
+  name: Include Fixture
+script: !include scripts.yaml
+automation: !include automations.yaml

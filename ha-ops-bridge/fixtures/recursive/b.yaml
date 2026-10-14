@@ -1,0 +1,2 @@
+second:
+  inner: !include a.yaml
