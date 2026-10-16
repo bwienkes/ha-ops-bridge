@@ -1,0 +1,61 @@
+#!/bin/sh
+# Fail-closed pre-commit hook: the working-tree privacy gate.
+#
+# Blocks any local commit whose working tree -- the exact set of files git is
+# about to ship -- contains a sensitive disclosure, per release/privacy_audit.py.
+# Runs the guard with --no-history (the full-history gate runs AFTER the commit).
+#
+# Fail-closed: if the scanner cannot run (no interpreter, no scanner, unexpected
+# error), the commit is blocked (exit 1). A guard that cannot run is never
+# treated as "clean".
+#
+# Install (per repo):
+#   cp scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# or make it the active hook globally for this repo:
+#   git config core.hooksPath scripts
+#
+# Note: a bare `git commit` still bypasses .git/hooks, so the Durable Authority
+# in AGENTS.md also mandates running this guard explicitly before every public
+# commit/push/release.
+
+set -u
+
+# Resolve the repository root (fail-closed if we cannot).
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  echo "pre-commit: could not resolve git root; blocking (fail-closed)" >&2
+  exit 1
+}
+
+GUARD="$ROOT/scripts/privacy_guard.py"
+if [ ! -f "$GUARD" ]; then
+  echo "pre-commit: scanner $GUARD missing; blocking (fail-closed)" >&2
+  exit 1
+fi
+
+# Find a usable python interpreter.
+PY=""
+for cand in python3 python py; do
+  if command -v "$cand" >/dev/null 2>&1; then PY="$cand"; break; fi
+done
+if [ -z "$PY" ]; then
+  echo "pre-commit: no python interpreter found; blocking (fail-closed)" >&2
+  exit 1
+fi
+
+echo "pre-commit: running fail-closed privacy gate (working tree)"
+"$PY" "$GUARD" --no-history
+status=$?
+
+case "$status" in
+  0)
+    exit 0
+    ;;
+  2)
+    echo "pre-commit: privacy guard errored; blocking (fail-closed)" >&2
+    exit 1
+    ;;
+  *)
+    echo "pre-commit: privacy guard found disclosures; blocking commit" >&2
+    exit 1
+    ;;
+esac

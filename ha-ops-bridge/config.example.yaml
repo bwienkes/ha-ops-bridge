@@ -1,0 +1,26 @@
+# ---------------------------------------------------------------------------
+# ha-ops-bridge — example app options (PLACEHOLDERS ONLY)
+# ---------------------------------------------------------------------------
+# This is a SAFE, placeholder-only example of the options a user supplies when
+# installing the app in the Home Assistant Supervisor UI.
+#
+#   * Replace every <...> placeholder with a value of your own choosing in the
+#     Supervisor "app options" dialog.
+#   * NEVER paste a real token, key, credential, host, or path into this file
+#     or commit one into this repository.
+#   * The checked-in `config.yaml` manifest ships `bridge_token: ""`; the real
+#     token only ever lives in the Supervisor container's app options and is
+#     never written to disk in this repo.
+#
+# The privacy gate (release/privacy_audit.py, scripts/privacy_guard.py) blocks
+# any real secret, real path, real internal address, or real identity that
+# slips into the tree. Placeholders like the ones below are permitted.
+# ---------------------------------------------------------------------------
+options:
+  # Bearer token required for every operational route. Choose a long random
+  # value yourself (16-128 chars per the manifest schema). Never committed.
+  bridge_token: "<BRIDGE_TOKEN>"
+
+# The manifest schema (unchanged from config.yaml) — shown here for reference.
+schema:
+  bridge_token: password(16,128)
