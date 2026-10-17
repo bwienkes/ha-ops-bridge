@@ -17,6 +17,6 @@ RUN mkdir -p /data && chown -R ${UID}:${GID} /data
 
 USER ${UID}:${GID}
 
-EXPOSE 8947/tcps
+EXPOSE 8947/tcp
 
 ENTRYPOINT ["/app/entrypoint.sh"]

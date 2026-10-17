@@ -13,9 +13,9 @@ arch:
   - amd64
 startup: application
 ports:
-  - "8947/tcp"
+  8947/tcp: 8947
 ports_description:
-  tcp: "Fixed unprivileged bridge port 8947; Bearer-token auth required."
+  8947/tcp: "Fixed unprivileged bridge port 8947; Bearer-token auth required."
 map:
   - type: homeassistant_config
     read_only: true
