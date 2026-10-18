@@ -1,7 +1,7 @@
 # ha-ops-bridge app manifest (current Supervisor apps schema)
 name: ha-ops-bridge
 slug: ha-ops-bridge
-version: "1.0.1"
+version: "1.0.2"
 description: >
   Preauthorized operations bridge for Home Assistant: script/automation
   read, log line search, config checks, and four bounded mutation

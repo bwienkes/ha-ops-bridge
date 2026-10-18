@@ -369,7 +369,7 @@ def serve(port=BRIDGE_PORT, config_root=None, bridge_secret=None):
     return server
 
 
-def main(argv=None):
+def main(argv=None, bridge_secret=None):
     if argv is None:
         argv = sys.argv[1:]
 
@@ -382,7 +382,10 @@ def main(argv=None):
     # /data/options.json (key `bridge_token`), written by the Supervisor.
     # HA_OPS_BRIDGE_TOKEN is a test-only override and is not set by the
     # production entrypoint.
-    secret = os.environ.get("HA_OPS_BRIDGE_TOKEN", "")
+    # The production entrypoint reads the Supervisor-owned options file while
+    # still root, then passes the validated secret in memory after dropping
+    # privileges. Direct/test launches may still use the environment override.
+    secret = bridge_secret or os.environ.get("HA_OPS_BRIDGE_TOKEN", "")
     if not secret:
         try:
             secret = load_bridge_token(OPTIONS_PATH)

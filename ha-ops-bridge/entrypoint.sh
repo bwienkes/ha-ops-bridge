@@ -42,5 +42,5 @@ print("bridge: options verified, starting on port 8947", file=sys.stderr)
 
 from app import main as bridge_main
 
-sys.exit(bridge_main.main())
+sys.exit(bridge_main.main(bridge_secret=token))
 BOOT

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2
+
+- Pass the already-validated app token directly to the service after dropping
+  privileges, avoiding a second read of the root-protected options file.
+
 ## 1.0.0 — 2025-01-01
 
 Initial release (Phase A + B).
