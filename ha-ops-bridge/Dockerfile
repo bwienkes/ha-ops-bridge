@@ -15,7 +15,8 @@ RUN chmod 0755 /app/entrypoint.sh
 RUN useradd -u ${UID} -U -r bridge || exit 0
 RUN mkdir -p /data && chown -R ${UID}:${GID} /data
 
-USER ${UID}:${GID}
+ENV BRIDGE_UID=${UID}
+ENV BRIDGE_GID=${GID}
 
 EXPOSE 8947/tcp
 

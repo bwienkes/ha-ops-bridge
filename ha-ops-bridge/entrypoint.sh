@@ -10,6 +10,7 @@ set -eu
 cd /app
 
 exec /usr/local/bin/python - <<'BOOT'
+import os
 import sys
 
 from app.bridge_options import OPTIONS_PATH, OptionsError, load_bridge_token
@@ -24,6 +25,17 @@ except OptionsError as exc:
 
 if not is_valid_secret_length(token):
     print("bridge: refusing to start: bridge_token is not 16-128 chars", file=sys.stderr)
+    sys.exit(1)
+
+# Home Assistant protects /data/options.json for root. Read it first, then
+# permanently drop every supplementary group plus the real/effective uid/gid
+# before importing or starting the network service.
+try:
+    os.setgroups([])
+    os.setgid(int(os.environ["BRIDGE_GID"]))
+    os.setuid(int(os.environ["BRIDGE_UID"]))
+except (KeyError, OSError, ValueError):
+    print("bridge: refusing to start: could not drop runtime privileges", file=sys.stderr)
     sys.exit(1)
 
 print("bridge: options verified, starting on port 8947", file=sys.stderr)
