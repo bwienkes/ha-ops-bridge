@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.3
+
+- Automation and script `read` now resolve both object-form and list-form
+  definitions (the live `automations.yaml` stores automations as a top-level
+  list), returning the matched entity with `found=true` and the same
+  bounded, privacy-safe object-only response contract.
+
 ## 1.0.2
 
 - Pass the already-validated app token directly to the service after dropping

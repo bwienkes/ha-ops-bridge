@@ -55,18 +55,57 @@ def _load_yaml(path, root):
 
 
 def _find_in_mapping(data, obj_id):
-    """Return data[obj_id] when data is a mapping with that key, else None."""
-    if isinstance(data, dict) and obj_id in data:
-        return data[obj_id]
-    return None
+    """Return data[obj_id] when data is a mapping with that key, else None.
+
+    The mapping form keys each object by its id (the YAML key IS the object
+    id). Returns None when the key is absent. Raises ReaderError when the key
+    is present but the value is not a mapping (unsupported, fail closed).
+    """
+    if not isinstance(data, dict):
+        return None
+    if obj_id not in data:
+        return None
+    found = data[obj_id]
+    if not isinstance(found, dict):
+        raise ReaderError("%s entry for %s is not a mapping" % (obj_id, data))
+    return found
+
+
+def _find_in_list(data, obj_id, filename):
+    """Find the entry in a list-form file whose `id`/`unique_id` is obj_id.
+
+    HA's native automations.yaml (and scripts) is a YAML LIST of automation
+    objects, each identified by its in-body `id` (newer HA) or `unique_id`
+    (older HA). Returns the single matched entry, or None when no entry
+    matches. Raises ReaderError on ambiguous structure (more than one entry
+    claims the same id) so the caller fails closed rather than guessing.
+    """
+    if not isinstance(data, list):
+        return None
+    matches = []
+    for entry in data:
+        if not isinstance(entry, dict):
+            continue
+        ident = entry.get("unique_id")
+        if not isinstance(ident, str) or not ident:
+            ident = entry.get("id")
+        if isinstance(ident, str) and ident == obj_id:
+            matches.append(entry)
+            if len(matches) > 1:
+                raise ReaderError(
+                    "%s has ambiguous entries for %s" % (filename, obj_id)
+                )
+    return matches[0] if matches else None
 
 
 def _resolve_from_yaml_file(root, filename, obj_id):
     """Resolve obj_id from a top-level YAML file. Returns result dict or None.
 
-    The file must be a mapping keyed by object id. Returns None if the file
-    does not exist. Raises ReaderError if the file is malformed or uses an
-    unsupported include.
+    Accepts either the mapping form (top-level mapping keyed by object id, as
+    used in the existing fixtures/tests) or the HA-native list form (a list of
+    objects each keyed by its `id` or `unique_id` field). Returns None when the
+    file does not exist or the id is not found. Raises ReaderError when the
+    file is malformed, ambiguous, or uses an unsupported include (fail closed).
     """
     path = os.path.join(root, filename)
     if not os.path.isfile(path):
@@ -74,9 +113,12 @@ def _resolve_from_yaml_file(root, filename, obj_id):
     data = _load_yaml(path, root)
     if data is None:
         return None
-    if not isinstance(data, dict):
-        raise ReaderError("%s is not a mapping" % filename)
-    found = _find_in_mapping(data, obj_id)
+    if isinstance(data, dict):
+        found = _find_in_mapping(data, obj_id)
+    elif isinstance(data, list):
+        found = _find_in_list(data, obj_id, filename)
+    else:
+        raise ReaderError("%s is neither a mapping nor a list" % filename)
     if found is None:
         return None
     return {

@@ -141,7 +141,8 @@ class ScriptReaderTest(unittest.TestCase):
         self.assertFalse(resp["found"])
         self.assertEqual(resp["object_id"], "nope")
 
-    def test_read_automation_found(self):
+    def test_read_automation_found_mapping_form(self):
+        """Regression: mapping-form (YAML key = automation id) must keep working."""
         _write(
             self.automations,
             "clean:\n  alias: clean\n  trigger: {}\n  action: []\n",
@@ -152,6 +153,110 @@ class ScriptReaderTest(unittest.TestCase):
         resp = script_reader.build_read_response("automation", "clean", resolved, "clean")
         self.assertTrue(resp["found"])
         self.assertEqual(resp["object_id"], "clean")
+        self.assertTrue(resp.get("object_hash"))
+
+    def test_read_automation_found_list_form_by_id(self):
+        """HA-native list-form: entries keyed by in-body `id` (newer HA)."""
+        _write(
+            self.automations,
+            (
+                "- id: battery_low_monitor_25\n"
+                "  alias: Battery Low Monitor\n"
+                "  trigger:\n    - platform: state\n"
+                "  action:\n    - service: light.turn_on\n"
+                "- id: other_light\n"
+                "  alias: Other Light\n"
+                "  trigger: {}\n"
+            ),
+        )
+        resolved = script_reader.read_object(self.root, "battery_low_monitor_25", "automation")
+        self.assertIsNotNone(resolved)
+        self.assertEqual(resolved["source_file"], "automations.yaml")
+        self.assertEqual(resolved["object"].get("id"), "battery_low_monitor_25")
+        resp = script_reader.build_read_response("automation", "battery_low_monitor_25", resolved, "battery_low_monitor_25")
+        self.assertTrue(resp["found"])
+        self.assertEqual(resp["object_id"], "battery_low_monitor_25")
+        self.assertTrue(resp.get("object_hash"))
+        # Only the requested object is returned, never the sibling.
+        self.assertEqual(len(resp["object"]), len(resolved["object"]))
+
+    def test_read_automation_found_list_form_by_unique_id(self):
+        """HA-native list-form: entries keyed by in-body `unique_id` (older HA)."""
+        _write(
+            self.automations,
+            (
+                "- unique_id: vacuum_001\n"
+                "  alias: Vacuum\n"
+                "  trigger: {}\n"
+                "  action: []\n"
+            ),
+        )
+        resolved = script_reader.read_object(self.root, "vacuum_001", "automation")
+        self.assertIsNotNone(resolved)
+        self.assertEqual(resolved["object"].get("unique_id"), "vacuum_001")
+        resp = script_reader.build_read_response("automation", "vacuum_001", resolved, "vacuum_001")
+        self.assertTrue(resp["found"])
+
+    def test_read_automation_missing_in_list_form(self):
+        """No entry in list form matches the id -> found=false (not an error)."""
+        _write(
+            self.automations,
+            (
+                "- id: alpha\n"
+                "  alias: Alpha\n"
+                "- id: beta\n"
+                "  alias: Beta\n"
+            ),
+        )
+        resolved = script_reader.read_object(self.root, "gamma", "automation")
+        self.assertIsNone(resolved)
+        resp = script_reader.build_read_response("automation", "gamma", resolved, "gamma")
+        self.assertFalse(resp["found"])
+        self.assertEqual(resp["object_id"], "gamma")
+
+    def test_read_automation_list_form_ambiguous_id_fails_closed(self):
+        """Two entries claim the same id -> ReaderError (409), never a guess."""
+        _write(
+            self.automations,
+            (
+                "- id: dup\n"
+                "  alias: First\n"
+                "- id: dup\n"
+                "  alias: Second\n"
+            ),
+        )
+        with self.assertRaises(script_reader.ReaderError):
+            script_reader.read_object(self.root, "dup", "automation")
+
+    def test_read_automation_list_form_rejects_bad_yaml(self):
+        """Malformed YAML in list form -> ReaderError (fail closed)."""
+        _write(
+            self.automations,
+            (
+                "- id: alpha\n"
+                "  alias: Alpha\n"
+                "  bad: [unclosed\n"
+            ),
+        )
+        with self.assertRaises(script_reader.ReaderError):
+            script_reader.read_object(self.root, "alpha", "automation")
+
+    def test_read_script_list_form(self):
+        """scripts.yaml also accepts the list form (same resolver path)."""
+        _write(
+            self.scripts,
+            (
+                "- id: laundry\n"
+                "  alias: Laundry\n"
+                "  sequence: []\n"
+            ),
+        )
+        resolved = script_reader.read_object(self.root, "laundry", "script")
+        self.assertIsNotNone(resolved)
+        self.assertEqual(resolved["object"].get("id"), "laundry")
+        resp = script_reader.build_read_response("script", "laundry", resolved, "laundry")
+        self.assertTrue(resp["found"])
+        self.assertEqual(resp["object_id"], "laundry")
 
     def test_read_script_rejects_path_id(self):
         _write(self.scripts, "scripts: {}\n")
